@@ -34,6 +34,27 @@ try {
   process.exit(1);
 }
 
+// The grader reads the post's address out of the copied file, so refuse to
+// hand it a file that is not a JSON object with a url string in it — a
+// truncated or mistyped POST.json should fail the run loudly here, not
+// surface later as an unreadable entry.
+let parsed: unknown;
+try {
+  parsed = JSON.parse(payload.toString('utf8'));
+} catch (err) {
+  console.error(`POST.json is not valid JSON: ${(err as Error).message}`);
+  process.exit(1);
+}
+if (
+  typeof parsed !== 'object' ||
+  parsed === null ||
+  typeof (parsed as { url?: unknown }).url !== 'string' ||
+  ((parsed as { url: string }).url.length === 0)
+) {
+  console.error('POST.json must be a JSON object with a non-empty "url" string.');
+  process.exit(1);
+}
+
 try {
   mkdirSync(OUTPUT_DIR, { recursive: true });
   writeFileSync(targetPath, payload);
